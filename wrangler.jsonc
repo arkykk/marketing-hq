@@ -1,0 +1,14 @@
+// Static Worker for Marketing HQ. main → live at hq.bigfish.careers (custom domain on the bigfish.careers zone).
+{
+  "$schema": "node_modules/wrangler/config-schema.json",
+  "name": "marketing-hq",
+  "compatibility_date": "2026-11-01",
+  "assets": {
+    "directory": "./dist",
+    "not_found_handling": "single-page-application"
+  },
+  "routes": [{ "pattern": "hq.bigfish.careers", "custom_domain": true }],
+  "workers_dev": false,
+  "preview_urls": false,
+  "observability": { "enabled": true }
+}
