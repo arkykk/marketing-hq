@@ -3,6 +3,7 @@
 One place for Big Fish + Arcadie's posts, photos, ideas, tone and rules.
 Phone first. Live at hq.bigfish.careers (Cloudflare Worker, deploy main → live).
 
+- **Channels** are data (`channels` table): Big Fish, Arcadie and Irina accounts; tool = typefully | buffer | metricool | browser | manual. See docs/publishing.md.
 - **Supabase** project `marketing-hq` (jlvwdgbhntmqujcfbhxx, eu-central-1, org Big Fish Group)
   - Tables: posts, post_photos, photos, ideas, docs, allowed_users
   - Login: email magic link. Only emails in `allowed_users` can sign up or see data (RLS + auth trigger).
