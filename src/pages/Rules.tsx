@@ -41,7 +41,8 @@ export default function Rules({ email: _email }: { email: string }) {
   return (
     <main className="page">
       <div className="stack"><Eyebrow>Marketing HQ</Eyebrow><h1 className="h1">Rules and plans</h1>
-        <p className="muted">What every Claude thread reads before writing a post.</p></div>
+        <p className="muted">What every Claude thread reads before writing a post.</p>
+        <a className="btn btn-outline" style={{ alignSelf: 'flex-start' }} href="#/account">Account and password</a></div>
       {docs === null ? <p className="muted">Loading…</p> : docs.length === 0 ? <div className="empty">No docs imported yet.</div> : (
         <div className="stack" style={{ gap: 10 }}>
           {docs.map((d) => (

@@ -9,6 +9,7 @@ import Review from './pages/Review'
 import Library from './pages/Library'
 import Ideas from './pages/Ideas'
 import Rules from './pages/Rules'
+import Account from './pages/Account'
 
 function useRoute() {
   const read = () => window.location.hash.replace(/^#/, '') || '/'
@@ -40,11 +41,18 @@ export default function App() {
   else if (parts[0] === 'review') page = <Review />
   else if (parts[0] === 'library') page = <Library />
   else if (parts[0] === 'ideas') page = <Ideas />
+  else if (parts[0] === 'account') page = <Account email={session.user.email ?? ''} />
   else if (parts[0] === 'rules') page = <Rules email={session.user.email ?? ''} />
   else page = <Week />
 
+  const needsPassword = !session.user.user_metadata?.password_set && parts[0] !== 'account'
   return (
     <>
+      {needsPassword && (
+        <a href="#/account" style={{ display: 'block', background: '#ffbd2f', color: '#000', padding: '12px 16px', fontSize: 15, fontWeight: 500, textAlign: 'center', textDecoration: 'none' }}>
+          Set a password once, so you never need an email link again →
+        </a>
+      )}
       {page}
       {parts[0] !== 'review' && <TabBar route={route} />}
       <Toaster />
