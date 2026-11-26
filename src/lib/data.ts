@@ -91,24 +91,18 @@ export async function listToReview(): Promise<Post[]> {
   return (data as Post[]).map(sortPhotos)
 }
 
-/** Posts counted against each tool's plan this calendar month (Europe/Madrid month ≈ UTC month here). */
-export async function monthCounts(): Promise<Record<string, number>> {
-  const now = new Date()
-  const start = new Date(Date.UTC(now.getUTCFullYear(), now.getUTCMonth(), 1)).toISOString()
-  const end = new Date(Date.UTC(now.getUTCFullYear(), now.getUTCMonth() + 1, 1)).toISOString()
+export interface PlanRow { channel: string; tool: Tool | null; status: Status; scheduled_at: string | null }
+
+/** Light rows for the tool-limit counts: every dated, not-skipped post between two instants. */
+export async function listPlanRows(fromIso: string, toIso: string): Promise<PlanRow[]> {
   const { data, error } = await supabase
     .from('posts')
-    .select('channel, tool, status')
-    .in('status', ['scheduled', 'published'])
-    .gte('scheduled_at', start)
-    .lt('scheduled_at', end)
+    .select('channel, tool, status, scheduled_at')
+    .gte('scheduled_at', fromIso)
+    .lt('scheduled_at', toIso)
+    .neq('status', 'skipped')
   if (error) throw error
-  const out: Record<string, number> = {}
-  for (const r of data as { channel: string; tool: string | null }[]) {
-    const key = r.channel
-    out[key] = (out[key] ?? 0) + 1
-  }
-  return out
+  return data as PlanRow[]
 }
 
 export async function getPost(id: string): Promise<Post> {

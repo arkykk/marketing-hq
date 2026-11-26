@@ -3,10 +3,11 @@ import { STATUS_LABEL } from './lib/format'
 
 type IconName =
   | 'plus' | 'arrow' | 'back' | 'close' | 'check' | 'pencil' | 'camera' | 'library' | 'week' | 'ideas' | 'rules'
-  | 'left' | 'right' | 'copy' | 'external' | 'image'
+  | 'left' | 'right' | 'copy' | 'external' | 'image' | 'home'
 
 const PATHS: Record<IconName, ReactNode> = {
   plus: <path d="M12 5v14M5 12h14" />,
+  home: <path d="M4 11l8-7 8 7v9a1 1 0 0 1-1 1h-5v-6h-4v6H5a1 1 0 0 1-1-1z" />,
   arrow: <path d="M5 12h14M13 6l6 6-6 6" />,
   back: <path d="M19 12H5M11 6l-6 6 6 6" />,
   close: <path d="M6 6l12 12M18 6L6 18" />,
@@ -50,14 +51,14 @@ export function StatusPill({ status, extra }: { status: string; extra?: string }
 }
 
 export function TabBar({ route }: { route: string }) {
-  const tab = route.split('/')[1] || 'week'
-  const items: [string, string, 'week' | 'library' | 'ideas' | 'rules'][] = [
-    ['week', 'Week', 'week'], ['library', 'Library', 'library'], ['ideas', 'Ideas', 'ideas'], ['rules', 'Rules', 'rules'],
+  const tab = route.split('/')[1] || 'home'
+  const items: [string, string, IconName][] = [
+    ['home', 'Home', 'home'], ['posts', 'All posts', 'week'], ['library', 'Photos', 'library'], ['ideas', 'Ideas', 'ideas'], ['rules', 'Rules', 'rules'],
   ]
   return (
     <nav className="tabbar" aria-label="Sections">
       {items.map(([id, label, icon]) => (
-        <a key={id} href={`#/${id === 'week' ? '' : id}`} aria-current={tab === id || (id === 'week' && (tab === '' || tab === 'post')) ? 'page' : undefined}>
+        <a key={id} href={`#/${id === 'home' ? '' : id}`} aria-current={tab === id || (id === 'posts' && tab === 'post') ? 'page' : undefined}>
           <Icon name={icon} size={22} />{label}
         </a>
       ))}

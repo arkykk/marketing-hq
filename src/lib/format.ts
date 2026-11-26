@@ -50,7 +50,7 @@ function madridOffset(d: Date): number {
 }
 
 export const STATUS_LABEL: Record<string, string> = {
-  draft: 'Draft', change: 'Change', approved: 'Approved', scheduled: 'Scheduled', published: 'Published', skipped: 'Skipped',
+  draft: 'Needs you', change: 'Claude is fixing', approved: 'Approved', scheduled: 'Scheduled', published: 'Posted', skipped: 'Skipped',
 }
 export const TOOL_LABEL: Record<string, string> = {
   typefully: 'Typefully', buffer: 'Buffer', metricool: 'Metricool', browser: 'Your browser', manual: 'By hand',
@@ -64,4 +64,28 @@ export function historyLine(h: { at: string; by: string; event: string; status?:
   if (h.event === 'status') return `${when} · ${who} · ${STATUS_LABEL[h.from ?? ''] ?? h.from} to ${STATUS_LABEL[h.to ?? ''] ?? h.to}`
   if (h.event === 'note') return `${when} · ${who} · note: ${h.note}`
   return `${when} · ${who} · ${h.event}`
+}
+
+/** First instant of a Madrid calendar month, as ISO UTC. monthOffset 0 = this month. */
+export function madridMonthStart(monthOffset = 0, now = new Date()): string {
+  const [y, m] = dayKey(now.toISOString()).split('-').map(Number)
+  const d = new Date(Date.UTC(y, m - 1 + monthOffset, 1))
+  const key = `${d.getUTCFullYear()}-${String(d.getUTCMonth() + 1).padStart(2, '0')}-01T00:00`
+  return fromLocalInput(key)!
+}
+export function monthName(iso: string): string {
+  return new Intl.DateTimeFormat('en-GB', { timeZone: TZ, month: 'long' }).format(new Date(iso))
+}
+/** "Goes out in 6 hours", "Tomorrow 09:00", "Sat 28 Nov 11:00", "No date yet". */
+export function whenLabel(iso: string | null, now = new Date()): string {
+  if (!iso) return 'No date yet'
+  const t = new Date(iso).getTime()
+  const diffH = (t - now.getTime()) / 3600000
+  if (diffH < 0) return `Was due ${dateTime(iso)}`
+  const today = dayKey(now.toISOString())
+  const tomorrow = dayKey(new Date(now.getTime() + 86400000).toISOString())
+  const k = dayKey(iso)
+  if (k === today) return diffH < 1 ? 'Goes out within the hour' : `Goes out in ${Math.round(diffH)} hours`
+  if (k === tomorrow) return `Tomorrow ${time(iso)}`
+  return `${shortDay(iso)} ${time(iso)}`
 }
