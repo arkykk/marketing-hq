@@ -34,7 +34,7 @@ export default function Review() {
         <div className="head"><div className="stack"><Eyebrow>All done</Eyebrow><h1 className="h1">Review</h1></div>
           <button className="icon-btn" aria-label="Close review" onClick={close}><Icon name="close" size={16} /></button></div>
         <div className="empty">Nothing left to review{done ? `: ${done} handled` : ''}. Claude picks this up on Monday at 12:00.</div>
-        <a href="#/" className="btn btn-blue">Back to the week</a>
+        <a href="#/" className="btn btn-blue">Back to Home</a>
       </main>
     )
   }

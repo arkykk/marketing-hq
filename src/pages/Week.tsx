@@ -1,6 +1,6 @@
 import { useEffect, useMemo, useState } from 'react'
 import {
-  createPost, listChannels, listPosts, markPublished, monthCounts,
+  createPost, listChannels, listPosts, markPublished,
   type Channel, type Owner, type Post,
 } from '../lib/data'
 import { dayKey, dayLabel, fromLocalInput, time, TOOL_LABEL } from '../lib/format'
@@ -16,21 +16,20 @@ function startOfTodayMadridIso(): string {
   return new Date(new Date(`${k}T00:00:00Z`).getTime() - 2 * 3600 * 1000).toISOString()
 }
 
-export default function Week() {
+export default function Week({ openNew = false }: { openNew?: boolean }) {
   const [channels, setChannels] = useState<Channel[]>([])
   const [posts, setPosts] = useState<Post[] | null>(null)
-  const [counts, setCounts] = useState<Record<string, number>>({})
   const [filter, setFilter] = useState<Filter>('all')
   const [err, setErr] = useState<string | null>(null)
-  const [adding, setAdding] = useState(false)
+  const [adding, setAdding] = useState(openNew)
   const [pickChannel, setPickChannel] = useState(false)
 
   async function load() {
     try {
       const from = startOfTodayMadridIso()
       const to = new Date(Date.now() + 15 * 86400000).toISOString()
-      const [c, p, n] = await Promise.all([listChannels(), listPosts(from, to), monthCounts()])
-      setChannels(c); setPosts(p); setCounts(n); setErr(null)
+      const [c, p] = await Promise.all([listChannels(), listPosts(from, to)])
+      setChannels(c); setPosts(p); setErr(null)
     } catch (e) { setErr(errorText(e)) }
   }
   useEffect(() => { load() }, [])
@@ -60,14 +59,6 @@ export default function Week() {
   }
   const toReview = (posts ?? []).filter((p) => p.status === 'draft' || p.status === 'change' || p.show_again).length
 
-  // Plan limits per tool, counted per calendar month.
-  const limits = (['typefully', 'buffer', 'metricool'] as const).map((tool) => {
-    const chs = channels.filter((c) => c.tool === tool)
-    const limit = Math.max(0, ...chs.map((c) => c.monthly_limit ?? 0))
-    const used = chs.reduce((s, c) => s + (counts[c.id] ?? 0), 0)
-    return { tool, limit, used }
-  }).filter((l) => l.limit > 0)
-
   const today = new Date()
   const end = new Date(Date.now() + 13 * 86400000)
   const fmt = (d: Date) => new Intl.DateTimeFormat('en-GB', { timeZone: 'Europe/Madrid', weekday: 'short', day: 'numeric', month: 'short' }).format(d)
@@ -78,27 +69,17 @@ export default function Week() {
     <main className="page">
       <div className="head">
         <div className="stack">
-          <Eyebrow>Marketing HQ</Eyebrow>
-          <h1 className="h1">Next 14 days</h1>
+          <Eyebrow>Next 14 days</Eyebrow>
+          <h1 className="h1">All posts</h1>
           <p className="muted">{fmt(today)} – {fmt(end)}</p>
         </div>
         <button className="icon-btn filled" aria-label="Add a post" onClick={() => setAdding(true)}><Icon name="plus" /></button>
       </div>
 
-      {limits.length > 0 && (
-        <section className="panel limits" aria-label="Plan limits this month">
-          {limits.map((l) => (
-            <div key={l.tool} className="stack">
-              <span className="small">{TOOL_LABEL[l.tool]}</span>
-              <span style={{ fontSize: 18, fontWeight: 500 }}>{l.used} / {l.limit}</span>
-              <div className={`bar${l.used > l.limit ? ' over' : ''}`}><div style={{ width: `${Math.min(100, (l.used / l.limit) * 100)}%` }} /></div>
-            </div>
-          ))}
-        </section>
-      )}
+      <p className="muted">Tool limits are on <a className="link" href="#/">Home</a>.</p>
 
       <div className="filters" role="group" aria-label="Filters">
-        {([['all', 'All'], ['bigfish', 'Big Fish'], ['arcadie', 'Arcadie'], ['irina', 'Irina'], ['review', 'To review']] as [Filter, string][]).map(([f, label]) => (
+        {([['all', 'All'], ['bigfish', 'Big Fish'], ['arcadie', 'Arcadie'], ['irina', 'Irina'], ['review', 'Needs you']] as [Filter, string][]).map(([f, label]) => (
           <button key={f} className="filter" aria-pressed={filter === f} onClick={() => setFilter(f)}>{label}</button>
         ))}
         <button className="filter" aria-pressed={filter.startsWith('ch:')} onClick={() => setPickChannel(true)}>{chFilterLabel}</button>

@@ -3,6 +3,7 @@ import type { Session } from '@supabase/supabase-js'
 import { supabase } from './lib/supabase'
 import { TabBar, Toaster } from './ui'
 import SignIn from './pages/SignIn'
+import Home from './pages/Home'
 import Week from './pages/Week'
 import PostPage from './pages/Post'
 import Review from './pages/Review'
@@ -35,7 +36,8 @@ export default function App() {
   if (session === undefined) return null
   if (!session) return <SignIn />
 
-  const parts = route.split('/').filter(Boolean)
+  const [path, query = ''] = route.split('?')
+  const parts = path.split('/').filter(Boolean)
   let page
   if (parts[0] === 'post' && parts[1]) page = <PostPage id={parts[1]} />
   else if (parts[0] === 'review') page = <Review />
@@ -43,7 +45,8 @@ export default function App() {
   else if (parts[0] === 'ideas') page = <Ideas />
   else if (parts[0] === 'account') page = <Account email={session.user.email ?? ''} />
   else if (parts[0] === 'rules') page = <Rules email={session.user.email ?? ''} />
-  else page = <Week />
+  else if (parts[0] === 'posts') page = <Week openNew={query.includes('new=1')} />
+  else page = <Home />
 
   const needsPassword = !session.user.user_metadata?.password_set && parts[0] !== 'account'
   return (
@@ -53,8 +56,8 @@ export default function App() {
           Set a password once, so you never need an email link again →
         </a>
       )}
+      {parts[0] !== 'review' && <TabBar route={path} />}
       {page}
-      {parts[0] !== 'review' && <TabBar route={route} />}
       <Toaster />
     </>
   )
