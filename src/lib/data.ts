@@ -111,11 +111,36 @@ export async function getPost(id: string): Promise<Post> {
   return sortPhotos(data as Post)
 }
 
+/**
+ * Linked copies of a post: same pair_id and the same text (e.g. one post for IG + FB and one for TikTok).
+ * For Arcadie they are one post, so approving, notes, text and photo changes apply to all of them.
+ * Copies already scheduled or posted are left alone.
+ */
+async function linkedCopies(id: string): Promise<string[]> {
+  const { data: me, error } = await supabase.from('posts').select('pair_id, caption').eq('id', id).single()
+  if (error || !me?.pair_id) return []
+  const { data, error: e2 } = await supabase.from('posts').select('id')
+    .eq('pair_id', me.pair_id).eq('caption', me.caption).neq('id', id)
+    .not('status', 'in', '(scheduled,published,skipped)')
+  if (e2) throw e2
+  return (data as { id: string }[]).map((r) => r.id)
+}
+
 export async function updatePost(id: string, patch: Partial<Post>): Promise<Post> {
   const { post_photos: _omit, history: _h, ...clean } = patch
   void _omit; void _h
+  const copies = await linkedCopies(id)
   const { data, error } = await supabase.from('posts').update(clean).eq('id', id).select(POST_SELECT).single()
   if (error) throw error
+  if (copies.length) {
+    // Dates and tools stay per channel; everything else follows.
+    const { scheduled_at: _d, tool: _t, external_id: _x, external_url: _u, channel: _c, ...shared } = clean
+    void _d; void _t; void _x; void _u; void _c
+    if (Object.keys(shared).length) {
+      const { error: e2 } = await supabase.from('posts').update(shared).in('id', copies)
+      if (e2) throw e2
+    }
+  }
   return sortPhotos(data as Post)
 }
 
@@ -188,12 +213,13 @@ export async function uploadPhoto(file: File): Promise<Photo> {
   return data as Photo
 }
 
-/** Replace a post's photo list with this order. */
+/** Replace a post's photo list with this order (on its linked copies too). */
 export async function setPostPhotos(postId: string, photoIds: string[]) {
-  const { error: delErr } = await supabase.from('post_photos').delete().eq('post_id', postId)
+  const ids = [postId, ...(await linkedCopies(postId))]
+  const { error: delErr } = await supabase.from('post_photos').delete().in('post_id', ids)
   if (delErr) throw delErr
   if (photoIds.length === 0) return
-  const rows = photoIds.map((photo_id, position) => ({ post_id: postId, photo_id, position }))
+  const rows = ids.flatMap((post_id) => photoIds.map((photo_id, position) => ({ post_id, photo_id, position })))
   const { error } = await supabase.from('post_photos').insert(rows)
   if (error) throw error
 }
