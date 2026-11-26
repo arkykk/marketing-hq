@@ -58,7 +58,9 @@ export function needsYou(posts: Post[], chById: Record<string, Channel>, now = n
   for (const [key, list] of groups) {
     const questions = list.filter((p) => p.status === 'draft').flatMap((p) => parseQuestions(p.id, p.change_note))
     const asked = new Set(questions.map((q) => q.postId))
+    const seen = new Set<string>()
     const review = list.filter((p) => (p.status === 'draft' || p.show_again) && !asked.has(p.id))
+      .filter((p) => !seen.has(p.caption) && !!seen.add(p.caption))
     const noPhoto = list.filter((p) => p.status !== 'scheduled' && VISUAL.has(chById[p.channel]?.network ?? '') && !(p.post_photos?.length))
     const readyToPost = list.filter((p) => {
       const tool = toolOf(p, chById)
